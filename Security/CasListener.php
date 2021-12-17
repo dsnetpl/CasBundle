@@ -47,9 +47,9 @@ class CasListener {
 
         // si le mode gateway est activé..
         if ($this->getParameter('gateway')) {
-            
+
             // .. code de pierre pelisset (pour les applis existantes...)
-            
+
             if($this->getParameter('force')) {
                 \phpCAS::forceAuthentication();
                 $force = true;
@@ -65,47 +65,39 @@ class CasListener {
                 }
             }
             if(!$force) {
-                if(!$_SESSION['cas_user']) {
-                    $token = new CasToken(array('ROLE_ANON'));
-                    $token->setUser('__NO_USER__');
-                } else {
+                if($_SESSION['cas_user']) {
                     $token = new CasToken();
                     $token->setUser($_SESSION['cas_user']);
                     $token->setAttributes($_SESSION['cas_attributes']);
+                    $this->tokenStorage->setToken($this->authenticationManager->authenticate($token));
                 }
-                $this->tokenStorage->setToken($this->authenticationManager->authenticate($token));
                 return;
             }
-            
-        } else { 
-        
+
+        } else {
+
             // .. sinon code de david .. pour les api rest / microservices et donc le nouvel ent ulille en view js notamment
-            
+
             if($this->getParameter('force')) {
                 \phpCAS::forceAuthentication();
             } else {
-                $authenticated = false;          
                 if($this->getParameter('gateway')) {
                     $authenticated = \phpCAS::checkAuthentication();
                 } else {
                     $authenticated = \phpCAS::isAuthenticated();
                 }
-                if ( (!isset($_SESSION['cas_user'])) || ( (isset($_SESSION['cas_user'])) && ($_SESSION['cas_user'] == false) ) ) { 
+                if ( (!isset($_SESSION['cas_user'])) || ( (isset($_SESSION['cas_user'])) && ($_SESSION['cas_user'] == false) ) ) {
                     if($authenticated) {
                         $_SESSION['cas_user'] = \phpCAS::getUser();
                         $_SESSION['cas_attributes'] = \phpCAS::getAttributes();
                         $token = new CasToken();
                         $token->setUser($_SESSION['cas_user']);
                         $token->setAttributes($_SESSION['cas_attributes']);
-                    } else {
-                        //$_SESSION['cas_user'] = false;
-                        $token = new CasToken(array('ROLE_ANON'));
-                        $token->setUser('__NO_USER__');
+                        $this->tokenStorage->setToken($this->authenticationManager->authenticate($token));
                     }
-                    $this->tokenStorage->setToken($this->authenticationManager->authenticate($token));
                     return;
                 }
-            } 
+            }
         }
 
         $token = new CasToken();
@@ -131,9 +123,9 @@ class CasListener {
 
     /**
      * Cette fonction sert à vérifier le global logout, PHPCAS n'arrive en effet pas à le gérer étrangement dans Symfony2
-     * @param GetResponseEvent $event
+     * @param RequestEvent $event
      */
-    public function checkHandleLogout(GetResponseEvent $event) {
+    public function checkHandleLogout(RequestEvent $event) {
         // Récupération du paramètre
         $logoutRequest = $event->getRequest()->request->get('logoutRequest');
         // Les chaines recherchés

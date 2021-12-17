@@ -9,7 +9,6 @@ use Symfony\Component\Security\Core\Authentication\Provider\AuthenticationProvid
 
 class CasProvider implements AuthenticationProviderInterface {
     private $userProvider;
-    private $config;
 
     public function __construct(UserProviderInterface $userProvider) {
         $this->userProvider = $userProvider;
@@ -29,4 +28,4 @@ class CasProvider implements AuthenticationProviderInterface {
     public function supports(TokenInterface $token) {
         return $token instanceof CasToken;
     }
-} 
+}
